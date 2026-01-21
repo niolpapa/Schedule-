@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Weekly Class Schedule</title>
+<style>
+:root{
+  --bg:#0f141b; --muted:#dbe6ffcc; --text:#ffffff; --accent:#6ea8fe; --good:#bbf7d0;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:#e7edf6;font-family:system-ui,Segoe UI,Roboto,Arial}
+header{padding:16px 16px 0}
+h1{margin:0 0 12px}
+#dayTabs{
+  display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;padding:4px 0;
+  scrollbar-width:thin; scrollbar-color:var(--accent) transparent;
+}
+#dayTabs::-webkit-scrollbar{height:4px}
+#dayTabs::-webkit-scrollbar-track{background:transparent}
+#dayTabs::-webkit-scrollbar-thumb{background:var(--accent);border-radius:2px}
+#dayTabs button{
+  background:#1a2230;border:1px solid #2a3345;color:#e7edf6;
+  padding:6px 8px;border-radius:999px;cursor:pointer;white-space:nowrap;flex-shrink:0;
+  font-size:13px;line-height:1.2;
+}
+#dayTabs button:not([data-small]) {min-width:48px;padding:6px 10px;font-size:14px;}
+#dayTabs button[data-small] {min-width:28px;padding:6px 6px;font-size:12px;}
+#dayTabs button.active{background:var(--accent);border-color:var(--accent);color:#06152b}
+main{padding:8px 16px 80px}
+
+/* Card layout: two columns with an extra slot for the dot */
+.card{
+  margin:10px 0; padding:12px;
+  display:grid; grid-template-columns:72px 1fr auto; gap:12px;
+  border-radius:14px; border:1px solid #00000040; color:var(--text); align-items:center;
+}
+/* full-tile color comes via inline style per subject */
+
+/* Vertical time block */
+.timeCol{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:#ffffff1a; border:1px solid #ffffff2b; border-radius:10px; padding:8px 6px; min-height:56px;
+}
+.timeTop,.timeBot{color:var(--text); font-weight:700}
+.timeSep{width:60%;height:1px;background:#ffffff55;margin:6px 0}
+
+.title{font-weight:800;font-size:16px}
+.meta{color:#000000 !important;font-size:13px;margin-top:6px;display:flex;gap:10px;flex-wrap:wrap}
+
+/* Blinking red dot for current class */
+.dot{
+  width:12px;height:12px;border-radius:999px;background:#ef4444;
+  box-shadow:0 0 0 3px #00000033;
+  display:none;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.card.active .dot{ display:inline-block; }
+@keyframes pulse{
+  0%   { transform: scale(1);   box-shadow:0 0 0 3px #00000033, 0 0 6px 1px rgba(239,68,68,.6); opacity:1; }
+  50%  { transform: scale(1.2); box-shadow:0 0 0 3px #00000033, 0 0 14px 3px rgba(239,68,68,.9); opacity:.85; }
+  100% { transform: scale(1);   box-shadow:0 0 0 3px #00000033, 0 0 6px 1px rgba(239,68,68,.6); opacity:1; }
+}
+
+/* Break tile */
+.break{
+  background:#2d394a;border:1px dashed #3a465a;color:#cbd5e1;
+  display:flex; align-items:center; justify-content:space-between; padding:12px 14px;
+  grid-template-columns:1fr; border-radius:14px; margin:10px 0;
+}
+.break .timeCol{display:none}
+
+.empty{color:#a8b3c7;text-align:center;margin:24px 0}
+
+/* Info tab content */
+#infoContent {
+  padding: 20px;
+  color: var(--text);
+  line-height: 1.6;
+  text-align: center;
+}
+#infoContent h2 { color: var(--accent); margin-top: 0; }
+#infoContent p { margin-bottom: 12px; }
+
+footer{position:fixed;left:0;right:0;bottom:0;padding:10px 16px;background:linear-gradient(0deg,#0f141b 60%,#0f141b00)}
+.primary{width:100%;padding:12px;border-radius:10px;border:none;background:var(--accent);color:#06152b;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+  <header>
+    <h1>Weekly Schedule</h1>
+    <nav id="dayTabs"></nav>
+  </header>
+
+  <main>
+    <section id="list"></section>
+  </main>
+
+  <footer>
+    <button id="todayBtn" class="primary">Go to Today</button>
+  </footer>
+
+<script>
+// ===== TIMETABLE =====
+const timetable = {
+  Mon: [
+    cls("Thermal Engineering II","10:00","11:00",{loc:"NB(S-02)"}),
+    cls("Metrology and Statistical Quality Control","11:00","13:00",{loc:"6220 (Lab)"}),
+    cls("Thermal Engineering II","14:00","16:00",{loc:"6118 (Lab)"}),
+    cls("Theory of Machines","16:00","17:00",{loc:"NB(S-02)"})
+  ],
+  Tue: [
+    cls("SPORTS","10:00","12:00",{loc:"NB(S-02)"}),
+    cls("Theory of Machines","12:00","13:00",{loc:"NB(S-02)"}),
+    cls("Metrology and Statistical Quality Control","13:00","14:00",{loc:"NB(S-02)"}),
+    cls("Manufacturing Processes II","16:00","17:00",{loc:"NB(S-02)"}),
+    cls("Control Systems","17:00","18:00",{loc:"NB(S-02)"})
+  ],
+  Wed: [
+    cls("Control Systems","10:00","11:00",{loc:"NB(S-02)"}),
+    cls("Manufacturing Process II","11:00","12:00",{loc:"NB(S-02)"}),
+    cls("Thermal Engineering II","13:00","14:00",{loc:"NB(S-02)"}),
+    cls("Theory of Machines","14:00","16:00",{loc:"6233 (Lab)"})
+  ],
+  Thu: [
+    cls("Control Systems","14:00","16:00",{loc:"6112 (Lab)"}),
+    cls("Metrology and Statistical Quality Control","16:00","17:00",{loc:"NB(S-02)"}),
+    cls("Theory of Machines","13:00","14:00",{loc:"NB(S-02)"})
+  ],
+  Fri: [
+    cls("SPORTS","08:00","10:00",{loc:"NB(S-02)"}),
+    cls("Metrology and Statistical Quality Control","11:00","12:00",{loc:"NB(S-02)"}),
+    cls("Thermal Engineering II","13:00","14:00",{loc:"NB(S-02)"}),
+    cls("Manufacturing Process II","14:00","16:00",{loc:"WS1 (Workshop)"}),
+    cls("Manufacturing Process II","16:00","17:00",{loc:"NB(S-02)"}),
+    cls("Control Systems","17:00","18:00",{loc:"NB(S-02)"})
+  ]
+};
+
+// ===== COLORS =====
+const subjectColors = {
+  "Thermal Engineering II": "#4f46e5",
+  "Metrology and Statistical Quality Control": "#db2777", 
+  "Theory of Machines": "#16a34a",
+  "SPORTS": "#bbf7d0",
+  "Manufacturing Processes II": "#ea580c",
+  "Control Systems": "#0891b2",
+  "Manufacturing Process II": "#eab308"
+};
+
+// ===== # TAB CONTENT =====
+const infoContent = `
+<h2>App Information</h2>
+<p>This simple app is made by <strong>Vineet Sharma</strong></p>
+<p>Any recommendations send mail at <a href="mailto:vineet.sharma.ug24@nsut.ac.in" style="color:var(--accent)">vineet.sharma.ug24@nsut.ac.in</a></p>
+`;
+
+// ===== UI FUNCTIONS =====
+function cls(title,start,end,extra={}){ return { title, start, end, ...extra }; }
+function toMinutes(hhmm){ const [h,m]=hhmm.split(":").map(Number); return h*60+m; }
+function fmtShort(hhmm){
+  const [H,M]=hhmm.split(":").map(Number);
+  const h=((H+11)%12)+1, ampm=H>=12?"pm":"am";
+  return `${h}${M?":"+M.toString().padStart(2,"0"):""} ${ampm}`;
+}
+function shade(hex, percent){
+  const v = parseInt(hex.replace("#",""),16);
+  let r=v>>16, g=(v>>8)&255, b=v&255;
+  r=Math.min(255,Math.max(0, r + Math.round(255*percent/100)));
+  g=Math.min(255,Math.max(0, g + Math.round(255*percent/100)));
+  b=Math.min(255,Math.max(0, b + Math.round(255*percent/100)));
+  return `#${(r<<16|g<<8|b).toString(16).padStart(6,"0")}`;
+}
+function nowMinutes(){ const d=new Date(); return d.getHours()*60 + d.getMinutes(); }
+
+// Tabs
+const tabs=document.getElementById("dayTabs"), list=document.getElementById("list");
+["Mon","Tue","Wed","Thu","Fri","#"].forEach((d,i)=>{ 
+  const b=document.createElement("button"); 
+  b.textContent=d; 
+  if(d === "#") b.dataset.small = "true";  // Small # button
+  b.onclick=()=>renderTab(d); 
+  tabs.appendChild(b); 
+});
+
+let activeTab=null;
+function renderTab(tab){
+  activeTab=tab;
+  [...tabs.children].forEach(btn=>btn.classList.toggle("active", btn.textContent===tab));
+  list.innerHTML="";
+  
+  if(tab === "#"){
+    list.innerHTML = `<div id="infoContent">${infoContent}</div>`;
+    return;
+  }
+  
+  const items=(timetable[tab]||[]).slice().sort((a,b)=>toMinutes(a.start)-toMinutes(b.start));
+  if(items.length===0){ list.innerHTML=`<p class="empty">No classes scheduled.</p>`; return; }
+
+  let lastEnd=null;
+  items.forEach(c=>{
+    if(lastEnd!==null){
+      const gap=toMinutes(c.start)-lastEnd;
+      if(gap>0) list.appendChild(breakCard(formatDur(gap)));
+    }
+    list.appendChild(classCard(c));
+    lastEnd=toMinutes(c.end);
+  });
+  updateActiveDot();
+}
+
+function classCard(c){
+  const el=document.createElement("article");
+  el.className="card";
+  const bg = subjectColors[c.title] || "#374151";
+  el.style.background = bg;
+  el.style.borderColor = shade(bg, -20);
+  el.dataset.start = c.start;
+  el.dataset.end = c.end;
+  el.innerHTML=`
+    <div class="timeCol">
+      <div class="timeTop">${fmtShort(c.start)}</div>
+      <div class="timeSep"></div>
+      <div class="timeBot">${fmtShort(c.end)}</div>
+    </div>
+    <div>
+      <div class="title">${c.title}</div>
+      <div class="meta">
+        <span>📍 ${c.loc ?? "TBA"}</span>
+        ${c.note ? `<span>👥 ${c.note}</span>` : ""}
+      </div>
+    </div>
+    <span class="dot" aria-label="Now"></span>`;
+  return el;
+}
+
+function breakCard(dur){
+  const el=document.createElement("article");
+  el.className="break";
+  el.innerHTML=`<div class="title">Break</div><div class="meta">${dur} between classes</div>`;
+  return el;
+}
+function formatDur(gap){ const h=Math.floor(gap/60), m=gap%60; return (h?`${h} hr `:"")+(m?`${m} min`:""); }
+
+function updateActiveDot(){
+  document.querySelectorAll(".card").forEach(c=>c.classList.remove("active"));
+  const dayNow=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][new Date().getDay()];
+  const validDays = ["Mon","Tue","Wed","Thu","Fri"];
+  if(!validDays.includes(dayNow) || activeTab !== dayNow) return;
+  
+  const now=nowMinutes();
+  for(const el of document.querySelectorAll(".card")){
+    const s=toMinutes(el.dataset.start), e=toMinutes(el.dataset.end);
+    if(now>=s && now<e){ el.classList.add("active"); break; }
+  }
+}
+setInterval(updateActiveDot, 60000);
+
+document.getElementById("todayBtn").onclick=()=>{
+  const map={1:"Mon",2:"Tue",3:"Wed",4:"Thu",5:"Fri"};
+  renderTab(map[new Date().getDay()] ?? "Mon");
+};
+
+// Load today (Friday)
+renderTab("Fri");
+</script>
+</body>
+</html>
